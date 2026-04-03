@@ -3,7 +3,7 @@
 import { Hono } from 'hono';
 import { env } from 'hono/adapter';
 
-export const lightNight = new Hono().get('/LightNight', async (c) => {
+export const lightNight = new Hono().get('/lightNight', async (c) => {
     const { ADAFRUIT_IO_USERNAME } = env<{ ADAFRUIT_IO_USERNAME: string }>(c);
     const { ADAFRUIT_IO_KEY } = env<{ ADAFRUIT_IO_KEY: string }>(c);
     const { ADAFRUIT_FEED_KEY } = env<{ ADAFRUIT_FEED_KEY: string }>(c);

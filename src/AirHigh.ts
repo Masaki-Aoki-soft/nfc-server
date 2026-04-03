@@ -1,16 +1,16 @@
-/* 電気を消すAPI */
+/* エアコンのハイパワーAPI */
 
 import { Hono } from 'hono';
 import { env } from 'hono/adapter';
 
-export const lightOff = new Hono().get('/lightOff', async (c) => {
+export const airHigh = new Hono().get('/airHigh', async (c) => {
     const { ADAFRUIT_IO_USERNAME } = env<{ ADAFRUIT_IO_USERNAME: string }>(c);
     const { ADAFRUIT_IO_KEY } = env<{ ADAFRUIT_IO_KEY: string }>(c);
     const { ADAFRUIT_FEED_KEY } = env<{ ADAFRUIT_FEED_KEY: string }>(c);
     const url = `https://io.adafruit.com/api/v2/${ADAFRUIT_IO_USERNAME}/feeds/${ADAFRUIT_FEED_KEY}/data`;
 
     const adafruitBody = {
-        value: 'LIGHT_OFF',
+        value: 'AIR_HIGH',
     };
 
     try {
@@ -29,7 +29,7 @@ export const lightOff = new Hono().get('/lightOff', async (c) => {
             return c.json(
                 {
                     success: 'success',
-                    message: '電気をオフにしました！',
+                    message: 'ハイパワーにしました！',
                     data: resData,
                 },
                 200
@@ -37,7 +37,7 @@ export const lightOff = new Hono().get('/lightOff', async (c) => {
         } else {
             return c.json({
                 success: 'false',
-                message: '電気をオフにできませんでした。',
+                message: 'ハイパワーにできませんでした。',
             });
         }
     } catch (e) {
