@@ -8,6 +8,7 @@ import { lightNight } from './LightNight';
 import { airHot } from './AirHot';
 import { airCold } from './AirCold';
 import { airHigh } from './AirHigh';
+import { airOff } from './AirOff';
 import { wol } from './Wol';
 
 const app = new Hono();
@@ -23,6 +24,7 @@ const MargedApp = app
     .route('/', airHot)
     .route('/', airCold)
     .route('/', airHigh)
+    .route('/', airOff)
     .route('/', wol);
 
 export default MargedApp;
