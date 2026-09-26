@@ -10,6 +10,8 @@ import { airCold } from './AirCold';
 import { airHigh } from './AirHigh';
 import { airOff } from './AirOff';
 import { wol } from './Wol';
+import { sesamiOpen } from "./SesamiOpen";
+import { sesamiClose } from "./SesamiClose";
 
 const app = new Hono();
 
@@ -25,6 +27,8 @@ const MargedApp = app
     .route('/', airCold)
     .route('/', airHigh)
     .route('/', airOff)
-    .route('/', wol);
+    .route('/', wol)
+    .route('/', sesamiOpen)
+    .route('/', sesamiClose);
 
 export default MargedApp;
