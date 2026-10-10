@@ -12,6 +12,7 @@ import { airOff } from './AirOff';
 import { wol } from './Wol';
 import { sesamiOpen } from "./SesamiOpen";
 import { sesamiClose } from "./SesamiClose";
+import { roomenv } from "./Roomenv"
 
 const app = new Hono();
 
@@ -29,6 +30,7 @@ const MargedApp = app
     .route('/', airOff)
     .route('/', wol)
     .route('/', sesamiOpen)
-    .route('/', sesamiClose);
+    .route('/', sesamiClose)
+    .route('/', roomenv);
 
 export default MargedApp;
