@@ -8,6 +8,9 @@ type AdafruitData = {
     created_at: string;
 };
 
+// ESP32 は60秒ごとに送信している。3回分 (3分) 届かなければオフラインとみなす
+const STALE_THRESHOLD_MS = 3 * 60 * 1000;
+
 export const roomEnv = new Hono().get('/roomEnv', async (c) => {
     const { ADAFRUIT_IO_USERNAME } = env<{ ADAFRUIT_IO_USERNAME: string }>(c);
     const { ADAFRUIT_IO_KEY } = env<{ ADAFRUIT_IO_KEY: string }>(c);
@@ -27,23 +30,18 @@ export const roomEnv = new Hono().get('/roomEnv', async (c) => {
             fetch(humidityUrl, { method: 'GET', headers }),
         ]);
 
-        if (temperatureRes.ok && humidityRes.ok) {
-            const temperatureData = (await temperatureRes.json()) as AdafruitData;
-            const humidityData = (await humidityRes.json()) as AdafruitData;
-
+        // フィードがまだ無い = ESP32 から一度もデータが届いていない
+        if (temperatureRes.status === 404 || humidityRes.status === 404) {
             return c.json(
                 {
-                    success: 'success',
-                    message: '温度・湿度を取得しました！',
-                    data: {
-                        temperature: Number(temperatureData.value), // ℃
-                        humidity: Number(humidityData.value), // %
-                        updatedAt: temperatureData.created_at, // 最終更新時刻 (UTC, ISO 8601)
-                    },
+                    success: 'false',
+                    message: 'ESP32からデータがまだ届いていません。',
                 },
-                200
+                503
             );
-        } else {
+        }
+
+        if (!temperatureRes.ok || !humidityRes.ok) {
             return c.json(
                 {
                     success: 'false',
@@ -52,6 +50,51 @@ export const roomEnv = new Hono().get('/roomEnv', async (c) => {
                 502
             );
         }
+
+        const temperatureData = (await temperatureRes.json()) as AdafruitData | null;
+        const humidityData = (await humidityRes.json()) as AdafruitData | null;
+
+        // フィードはあるがデータが空
+        if (!temperatureData?.created_at || !humidityData?.created_at) {
+            return c.json(
+                {
+                    success: 'false',
+                    message: 'ESP32からデータがまだ届いていません。',
+                },
+                503
+            );
+        }
+
+        // 古い方の時刻で鮮度を判定 (どちらか片方でも止まっていればオフライン扱い)
+        const temperatureAt = new Date(temperatureData.created_at).getTime();
+        const humidityAt = new Date(humidityData.created_at).getTime();
+        const oldestAt = Math.min(temperatureAt, humidityAt);
+        const elapsedMs = Date.now() - oldestAt;
+
+        if (elapsedMs > STALE_THRESHOLD_MS) {
+            return c.json(
+                {
+                    success: 'false',
+                    message: 'ESP32からデータが届いていません。電源やネットワークを確認してください。',
+                    lastUpdatedAt: new Date(oldestAt).toISOString(), // 最後に届いた時刻 (UTC)
+                    elapsedSeconds: Math.floor(elapsedMs / 1000),
+                },
+                503
+            );
+        }
+
+        return c.json(
+            {
+                success: 'success',
+                message: '温度・湿度を取得しました！',
+                data: {
+                    temperature: Number(temperatureData.value), // ℃
+                    humidity: Number(humidityData.value), // %
+                    updatedAt: temperatureData.created_at, // 最終更新時刻 (UTC, ISO 8601)
+                },
+            },
+            200
+        );
     } catch (e) {
         return c.json(
             {
