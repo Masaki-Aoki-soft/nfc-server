@@ -12,7 +12,7 @@ import { airOff } from './AirOff';
 import { wol } from './Wol';
 import { sesamiOpen } from "./SesamiOpen";
 import { sesamiClose } from "./SesamiClose";
-import { roomenv } from "./Roomenv"
+import { roomEnv } from './roomEnv';
 
 const app = new Hono();
 
